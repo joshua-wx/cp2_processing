@@ -8,12 +8,12 @@ from shutil import rmtree
 from setuptools import find_packages, setup, Command
 
 # Package meta-data.
-NAME = 'cpol_processing'
+NAME = 'cp2_processing'
 DESCRIPTION = """Radar PPIs data processing, quality control, filtering, attenuation
 correction, dealiasing, unfolding, hydrometeors calculation, rainfall rate estimation."""
-URL = 'https://github.com/vlouf/cpol_processing'
-EMAIL = 'valentin.louf@monash.edu'
-AUTHOR = 'Valentin Louf'
+URL = 'https://github.com/joshua-wx/cp2_processing'
+EMAIL = 'joshua.soderholm@bom.gov.au'
+AUTHOR = 'Valentin Louf and Joshua Soderholm'
 
 # What packages are required for this module to be executed?
 REQUIRED = ["arm_pyart",
@@ -75,7 +75,7 @@ setup(
     author_email=EMAIL,
     url=URL,
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
-    package_data={'cpol_processing': ['data/GM_model_CPOL.pkl.gz']},
+    package_data={'cp2_processing': ['data/GM_model_CP2.pkl.gz']},
     install_requires=REQUIRED,
     include_package_data=True,
     license='ISC',

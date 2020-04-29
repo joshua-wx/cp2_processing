@@ -22,23 +22,18 @@ def _check_nyquist_velocity(radar, vel_name='VEL'):
     Check if Nyquist velocity is present in the instrument parameters. If not,
     then it is created.
     """
-    try:
-        vnyq = radar.instrument_parameters['nyquist_velocity']['data']
-        if vnyq is None:
-            raise KeyError('Nyquist velocity does not exists.')
-    except KeyError:
-        vnyq = np.nanmax(radar.fields[vel_name]['data'])
-        nray = len(radar.azimuth['data'])
-        vnyq_array = np.array([vnyq] * nray, dtype=np.float32)
-        nyquist_velocity = pyart.config.get_metadata('nyquist_velocity')
-        nyquist_velocity['data'] = vnyq_array
-        nyquist_velocity['_Least_significant_digit'] = 2
-        radar.instrument_parameters['nyquist_velocity'] = nyquist_velocity
 
-    return vnyq
+    n_sweeps = len(radar.fixed_angle['data'])
+    nyquist_rays = radar.instrument_parameters['nyquist_velocity']['data']
+    nquist_sweeps = []
+    for i in range(n_sweeps):
+        sweep_idx = radar.get_start(i)
+        nquist_sweeps.append(nyquist_rays[sweep_idx])
+
+    return nquist_sweeps
 
 
-def unravel(radar, gatefilter, vel_name='VEL', dbz_name='DBZ', nyquist=None):
+def unravel(radar, gatefilter, vel_name='VEL', dbz_name='DBZ'):
     """
     Unfold Doppler velocity using Py-ART region based algorithm. Automatically
     searches for a folding-corrected velocity field.
@@ -62,16 +57,13 @@ def unravel(radar, gatefilter, vel_name='VEL', dbz_name='DBZ', nyquist=None):
     import unravel
 
     vnyq = _check_nyquist_velocity(radar, vel_name)
-    if nyquist is None:
-        if np.isscalar(vnyq):
-            nyquist = vnyq
 
     unfvel = unravel.unravel_3D_pyart(radar,
                                       vel_name,
                                       dbz_name,
                                       gatefilter=gatefilter,
                                       alpha=0.8,
-                                      nyquist_velocity=nyquist,
+                                      nyquist_velocity=vnyq,
                                       strategy='long_range')
 
     vel_meta = pyart.config.get_metadata('velocity')

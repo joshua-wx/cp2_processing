@@ -43,7 +43,7 @@ def correct_gaseous_attenuation(radar):
 
     tempgas1 = 0.4 + 3.45 * np.exp(-TH / 1.8)
     tempgas2 = 27.8 + 154 * np.exp(-TH / 2.2)
-    atten_gas = 1.2 * tempgas1 * (1 - np.exp(-R / tempgas2))  # 1.2 factor for C-band 1.0 for S-band.
+    atten_gas = 1.0 * tempgas1 * (1 - np.exp(-R / tempgas2))  # 1.2 factor for C-band 1.0 for S-band.
     atten_gas[~pos] = 0
 
     return atten_gas

@@ -2,10 +2,11 @@
 Raw radar PPIs processing. Quality control, filtering, attenuation correction,
 dealiasing, unfolding, hydrometeors calculation, rainfall rate estimation.
 
-@title: cpol_processing
-@author: Valentin Louf <valentin.louf@bom.gov.au>
-@institution: Monash University and Bureau of Meteorology
-@date: 10/03/2020
+@title: cp2_processing
+@author: Valentin Louf <valentin.louf@bom.gov.au> and Joshua Soderholm <joshua.soderholm@bom.gov.au>
+@institution: Bureau of Meteorology
+@date: 29/04/2020
+@version: 1
 
 .. autosummary::
     :toctree: generated/
@@ -26,7 +27,7 @@ import traceback
 import dask
 import dask.bag as db
 import crayons
-import cpol_processing
+import cp2_processing
 
 
 def chunks(l, n):
@@ -47,7 +48,6 @@ def welcome_message():
     print(" " * 25 + crayons.red("Raw radar PPIs production line.\n", bold=True))
     print(" - Input data directory path is: " + crayons.yellow(INPATH))
     print(" - Output data directory path is: " + crayons.yellow(OUTPATH))
-    print(" - Radiosounding directory path is: " + crayons.yellow(SOUND_DIR))
     print(f" - The process will occur between {crayons.yellow(START_DATE)} and {crayons.yellow(END_DATE)}.")
     if USE_UNRAVEL:
         print(" - " + crayons.yellow("UNRAVEL") + " will be used as dealiasing algorithm.")
@@ -70,9 +70,8 @@ def buffer(infile):
         Path for saving output data.
     """    
     try:
-        cpol_processing.process_and_save(infile, 
+        cp2_processing.process_and_save(infile, 
                                          OUTPATH, 
-                                         sound_dir=SOUND_DIR,
                                          do_dealiasing=DO_DEALIASING, 
                                          use_unravel=USE_UNRAVEL)
     except Exception:
@@ -104,9 +103,8 @@ if __name__ == '__main__':
     Global variables definition.
     """
     # Main global variables (Path directories).
-    INPATH = "/g/data/hj10/admin/cpol_level_1a/v2019/ppi/"
-    OUTPATH = '/g/data/hj10/admin/cpol_level_1b/v2020/'
-    SOUND_DIR = "/g/data/kl02/vhl548/darwin_ancillary/DARWIN_radiosonde"
+    INPATH = "/g/data/hj10/admin/cp2/level_1/s_band/sur/"
+    OUTPATH = '/g/data/hj10/admin/cp2/level_1/level_1b_sband_sur/v2020/'
 
     # Parse arguments
     parser_description =  """Raw radar PPIs processing. It provides Quality

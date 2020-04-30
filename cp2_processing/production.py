@@ -76,8 +76,6 @@ def process_and_save(radar_file_name,
 
     # Create directories.
     _mkdir(outpath)
-    outpath = os.path.join(outpath, "v{}".format(today.strftime('%Y')))
-    _mkdir(outpath)
     outpath_ppi = os.path.join(outpath, 'ppi')
     _mkdir(outpath_ppi)
     tick = time.time()
@@ -165,8 +163,8 @@ def process_and_save(radar_file_name,
                 'title': "radar PPI volume from CP2",
                 'uuid': unique_id,
                 'version': radar.metadata['version']}
-
-        radar.metadata = metadata
+    
+    radar.metadata = metadata
 
     # Write results
     pyart.io.write_cfradial(outfilename, radar, format='NETCDF4')
@@ -224,7 +222,8 @@ def production_line(radar_file_name,
                     ('VEL_UNFOLDED', 'corrected_velocity'),
                     ('DBZ', 'total_power'),
                     ('DBZ_CORR', 'corrected_reflectivity'),
-                    ('RHOHV_CORR', 'cross_correlation_ratio'),
+                    ('RHOHV', 'cross_correlation_ratio'),
+                    ('RHOHV_CORR', 'corrected_cross_correlation_ratio'),
                     ('ZDR', 'differential_reflectivity'),
                     ('ZDR_CORR', 'corrected_differential_reflectivity'),
                     ('PHIDP', 'differential_phase'),
@@ -237,6 +236,7 @@ def production_line(radar_file_name,
                     ('KDP_VAL', 'corrected_specific_differential_phase'),
                     ('WIDTH', 'spectrum_width'),
                     ('SNR', 'signal_to_noise_ratio'),
+                    ('SNR_CORR', 'corrected_signal_to_noise_ratio'),
                     ('NCP', 'normalized_coherent_power'),
                     ('DBZV', 'reflectivity_v'),
                     ('WRADV', 'spectrum_width_v'),
@@ -249,6 +249,8 @@ def production_line(radar_file_name,
                         'corrected_reflectivity',
                         'corrected_specific_differential_phase',
                         'corrected_velocity',
+                        'corrected_cross_correlation_ratio',
+                        'reflectivity',
                         'cross_correlation_ratio',
                         'differential_phase',
                         'differential_reflectivity',
@@ -277,12 +279,16 @@ def production_line(radar_file_name,
 
     #FIX ISSUES WITH ATTRIBUTES HERE
 
+    # recalculate SNR
+    #snr_corr = radar_codes.snr_from_reflectivity(radar)
+    #radar.add_field_like('SNR', 'SNR_CORR', snr_corr, replace_existing=True)
+    
     # Correct RHOHV
-    rho_corr = radar_codes.correct_rhohv(radar)
+    rho_corr = radar_codes.correct_rhohv(radar, snr_name='SNR')
     radar.add_field_like('RHOHV', 'RHOHV_CORR', rho_corr, replace_existing=True)
 
     # Correct ZDR
-    corr_zdr = radar_codes.correct_zdr(radar)
+    corr_zdr = radar_codes.correct_zdr(radar, snr_name='SNR')
     radar.add_field_like('ZDR', 'ZDR_CORR', corr_zdr, replace_existing=True)
     
     # Temperature    
@@ -295,7 +301,8 @@ def production_line(radar_file_name,
                                          refl_name='DBZ',
                                          phidp_name="PHIDP",
                                          rhohv_name='RHOHV_CORR',
-                                         zdr_name="ZDR_CORR")
+                                         zdr_name="ZDR_CORR",
+                                         snr_name='SNR')
     
     #phidp filtering
     phidp, kdp = phase.phidp_giangrande(radar, gatefilter)
@@ -314,7 +321,9 @@ def production_line(radar_file_name,
                                                           gatefilter,
                                                           kdp_name=kdp_field_name,
                                                           zdr_name='ZDR_CORR',
+                                                          refl_name='DBZ',
                                                           band='S')
+    
     radar.add_field('radar_echo_classification', hydro_class, replace_existing=True)
 
     # Rainfall rate
@@ -325,13 +334,6 @@ def production_line(radar_file_name,
                                           zdr_name='ZDR_CORR')
     radar.add_field("radar_estimated_rain_rate", rainfall)
 
-    # Remove obsolete fields:
-    for obsolete_key in ["Refl", "PHI_UNF", "PHI_CORR", "height", 'TH', 'TV', 'RHOHV']:
-        try:
-            radar.fields.pop(obsolete_key)
-        except KeyError:
-            continue
-
     # Change the temporary working name of fields to the one define by the user.
     for old_key, new_key in FIELDS_NAMES:
         try:
@@ -339,10 +341,10 @@ def production_line(radar_file_name,
         except KeyError:
             continue
 
-#     # Delete working variables.
-#     for k in list(radar.fields.keys()):
-#         if k not in OUTPUT_RADAR_FLD:
-#             radar.fields.pop(k)
+    # Delete working variables.
+    for k in list(radar.fields.keys()):
+        if k not in OUTPUT_RADAR_FLD:
+            radar.fields.pop(k)
 
     # Correct the standard_name metadata:
     radar_codes.correct_standard_name(radar)

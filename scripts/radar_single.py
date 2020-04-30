@@ -41,8 +41,8 @@ def main():
 
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
-        import cpol_processing
-        cpol_processing.process_and_save(INFILE, OUTPATH, use_unravel=USE_UNRAVEL)
+        import cp2_processing
+        cp2_processing.process_and_save(INFILE, OUTPATH, use_unravel=USE_UNRAVEL)
 
     print(crayons.green("Process completed."))
 
@@ -53,12 +53,6 @@ if __name__ == '__main__':
     """
     Global variables definition and logging file initialisation.
     """
-    # Input directory for Radiosoundings (use my other script, named caprica to
-    # download and format these datas).
-    # INPATH = "/g/data/hj10/cpol_level_1a/ppi/"
-    # OUTPATH = "/g/data/hj10/cpol_level_1b/"
-
-
     # Parse arguments
     parser_description = """Raw radar PPIs processing. It provides Quality
 control, filtering, attenuation correction, dealiasing, unfolding, hydrometeors
@@ -95,3 +89,6 @@ calculation, and rainfall rate estimation."""
         parser.error("Invalid (or don't exist) output directory.")
 
     main()
+
+    
+    # %run radar_single -i /g/data/hj10/admin/cp2/level_1/s_band/sur/2014/20141127/cp2-s_20141127_063502.sur.mdv -o /g/data/hj10/admin/cp2/level_1b_testing

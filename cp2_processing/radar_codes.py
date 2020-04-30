@@ -38,6 +38,33 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+def snr_from_reflectivity(radar, refl_field='DBZ'):
+    """
+    Just in case pyart.retrieve.calculate_snr_from_reflectivity, I can calculate
+    it 'by hand'.
+    Parameter:
+    ===========
+    radar:
+        Py-ART radar structure.
+    refl_field_name: str
+        Name of the reflectivity field.
+    Return:
+    =======
+    snr: dict
+        Signal to noise ratio.
+    """
+    range_grid, _ = np.meshgrid(radar.range['data'], radar.azimuth['data'])
+    range_grid += 1  # Cause of 0
+
+    # remove range scale.. This is basically the radar constant scaled dBm
+    pseudo_power = (radar.fields[refl_field]['data'] - 20.0 * np.log10(range_grid / 1000.0))
+    # The noise_floor_estimate can fail sometimes in pyart, that's the reason
+    # why this whole function exists.
+    noise_floor_estimate = -40
+    snr_data = pseudo_power - noise_floor_estimate
+
+    return snr_data
+
 def _nearest(items, pivot):
     """
     Find the nearest item.
@@ -115,7 +142,7 @@ def correct_rhohv(radar, rhohv_name='RHOHV', snr_name='SNR'):
     except Exception:
         pass
 
-    return rho_corr
+    return np.ma.masked_array(rho_corr, rhohv.mask)
 
 
 def correct_standard_name(radar):
@@ -279,9 +306,18 @@ def temperature_profile(radar):
     # Getting the temperature
     dset = xr.open_dataset(era5)
     temp = dset.sel(longitude=grlon, latitude=grlat, time=dtime, method='nearest')
-    z_dict, temp_dict = pyart.retrieve.map_profile_to_gates(temp.t, temp.z, radar)
+    
+    #extract data
+    geopot_profile = np.array(temp.z.values/9.80665) #geopot -> geopotH
+    temp_profile = np.array(temp.t.values - 273.15)
+    
+    #append surface data using lowest level
+    geopot_profile = np.append(geopot_profile,[0])
+    temp_profile = np.append(temp_profile, temp_profile[-1])
+        
+    z_dict, temp_dict = pyart.retrieve.map_profile_to_gates(temp_profile, geopot_profile, radar)
 
-    temp_info_dict = {'data': temp_dict['data'] - 273.15,  # Switch to celsius.
+    temp_info_dict = {'data': temp_dict['data'],  # Switch to celsius.
                       'long_name': 'Sounding temperature at gate',
                       'standard_name': 'temperature',
                       'valid_min': -100, 'valid_max': 100,

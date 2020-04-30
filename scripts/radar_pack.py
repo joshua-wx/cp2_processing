@@ -88,7 +88,7 @@ if __name__ == '__main__':
     """
     # Main global variables (Path directories).
     INPATH = "/g/data/hj10/admin/cp2/level_1/s_band/sur/"
-    OUTPATH = '/g/data/hj10/admin/cp2/level_1/level_1b_sband_sur/v2020/'
+    OUTPATH = '/g/data/hj10/admin/cp2/level_1b_sband_sur/v2020/'
 
     # Parse arguments
     parser_description =  """Raw radar PPIs processing. It provides Quality
@@ -171,3 +171,6 @@ calculation, and rainfall rate estimation."""
                         print("%s. Exit code: %d" % (error, error.exitcode))
                     except Exception:
                         traceback.print_exc()
+                        
+                        
+# %run radar_pack.py -s 20141127 -e 20141127

@@ -90,7 +90,7 @@ def main(date_range):
 
         print(f'{len(flist)} files found for ' + day.strftime("%Y-%b-%d"))
 
-        for flist_chunk in chunks(flist, 32):
+        for flist_chunk in chunks(flist, 8):
             bag = db.from_sequence(flist_chunk).map(buffer)
             _ = bag.compute()
         del bag
@@ -104,7 +104,7 @@ if __name__ == '__main__':
     """
     # Main global variables (Path directories).
     INPATH = "/g/data/hj10/admin/cp2/level_1/s_band/sur/"
-    OUTPATH = '/g/data/hj10/admin/cp2/level_1/level_1b_sband_sur/v2020/'
+    OUTPATH = '/g/data/hj10/admin/cp2/level_1b_sband_sur/v2020/'
 
     # Parse arguments
     parser_description =  """Raw radar PPIs processing. It provides Quality
@@ -157,3 +157,6 @@ calculation, and rainfall rate estimation."""
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
         main(date_range)
+        
+        
+# %run dask_pack.py -s 20141127 -e 20141127

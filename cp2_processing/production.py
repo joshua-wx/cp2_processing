@@ -104,8 +104,9 @@ def process_and_save(radar_file_name,
 
     # Check if output file already exists.
     if os.path.isfile(outfilename):
-        print(f"Output file {outfilename} already exists.")
-        return None
+        print(f"Output file {outfilename} already exists. Removing file")
+        os.system('rm ' + outfilename)
+        #return None
 
     # Lat/lon informations
     latitude = radar.latitude['data']
@@ -220,7 +221,7 @@ def production_line(radar_file_name,
     """
     FIELDS_NAMES = [('VEL', 'velocity'),
                     ('VEL_UNFOLDED', 'corrected_velocity'),
-                    ('DBZ', 'total_power'),
+                    ('DBZ', 'reflectivity'),
                     ('DBZ_CORR', 'corrected_reflectivity'),
                     ('RHOHV', 'cross_correlation_ratio'),
                     ('RHOHV_CORR', 'corrected_cross_correlation_ratio'),
@@ -255,10 +256,8 @@ def production_line(radar_file_name,
                         'differential_phase',
                         'differential_reflectivity',
                         'radar_echo_classification',
-                        'radar_estimated_rain_rate',
                         'signal_to_noise_ratio',
                         'spectrum_width',
-                        'total_power',
                         'velocity']
 
     # !!! READING THE RADAR !!!
@@ -305,7 +304,7 @@ def production_line(radar_file_name,
                                          snr_name='SNR')
     
     #phidp filtering
-    phidp, kdp = phase.phidp_giangrande(radar, gatefilter)
+    phidp, kdp = phase.phidp_giangrande(radar, gatefilter, rhv_field='RHOHV_CORR')
     radar.add_field('PHIDP_VAL', phidp)
     radar.add_field('KDP_VAL', kdp)
     kdp_field_name = 'KDP_VAL'
@@ -321,6 +320,7 @@ def production_line(radar_file_name,
                                                           gatefilter,
                                                           kdp_name=kdp_field_name,
                                                           zdr_name='ZDR_CORR',
+                                                          rhohv_name='RHOHV_CORR',
                                                           refl_name='DBZ',
                                                           band='S')
     

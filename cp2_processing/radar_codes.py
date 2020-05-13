@@ -131,10 +131,12 @@ def correct_rhohv(radar, rhohv_name='RHOHV', snr_name='SNR'):
     rhohv = radar.fields[rhohv_name]['data'].copy()
     snr = radar.fields[snr_name]['data'].copy()
 
-    natural_snr = 10**(0.1 * snr)
-    natural_snr = natural_snr.filled(-9999)
-    rho_corr = rhohv * (1 + 1 / natural_snr)
-
+    #appears to be done onsite at CP2
+#     natural_snr = 10**(0.1 * snr)
+#     natural_snr = natural_snr.filled(-9999)
+#     rho_corr = rhohv * (1 + 1 / natural_snr)
+    rho_corr = rhohv
+    
     # Not allowing the corrected RHOHV to be lower than the raw rhohv
     rho_corr[np.isnan(rho_corr) | (rho_corr < 0) | (rho_corr > 1)] = 1
     try:

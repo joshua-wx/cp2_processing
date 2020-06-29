@@ -258,7 +258,8 @@ def production_line(radar_file_name,
                         'radar_echo_classification',
                         'signal_to_noise_ratio',
                         'spectrum_width',
-                        'velocity']
+                        'velocity',
+                        'normalized_coherent_power']
 
     # !!! READING THE RADAR !!!
 

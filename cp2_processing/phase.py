@@ -134,7 +134,7 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
                                                    gatefilter=gatefilter,
                                                    skip_checks=True,
                                                    vel_field=phidp_field,
-                                                   nyquist_vel=90)
+                                                   nyquist_vel=180)
 
     radar.add_field_like(phidp_field, 'PHITMP', unfphidic['data'])
 

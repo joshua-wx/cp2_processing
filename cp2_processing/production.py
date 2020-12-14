@@ -278,10 +278,6 @@ def production_line(radar_file_name,
         raise TypeError(f"Reflectivity field is empty in {radar_file_name}.")
 
     #FIX ISSUES WITH ATTRIBUTES HERE
-
-    # recalculate SNR
-    #snr_corr = radar_codes.snr_from_reflectivity(radar)
-    #radar.add_field_like('SNR', 'SNR_CORR', snr_corr, replace_existing=True)
     
     # Correct RHOHV
     rho_corr = radar_codes.correct_rhohv(radar, snr_name='SNR')

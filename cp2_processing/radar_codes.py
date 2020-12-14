@@ -296,28 +296,34 @@ def temperature_profile(radar):
     temp_info_dict: dict
         Temperature in Celsius, interpolated at each radar gates.
     """
-    grlat = radar.latitude['data'][0]
-    grlon = radar.longitude['data'][0]
-    dtime = pd.Timestamp(cftime.num2pydate(radar.time['data'][0], radar.time['units']))
-
-    year = dtime.year
-    era5 = f'/g/data/rq0/admin/temperature_profiles/era5_data/{year}_openradar_temp_geopot.nc'
-    if not os.path.isfile(era5):
-        raise FileNotFoundError(f'{era5}: no such file for temperature.')
-
-    # Getting the temperature
-    dset = xr.open_dataset(era5)
-    temp = dset.sel(longitude=grlon, latitude=grlat, time=dtime, method='nearest')
+    #set era path
+    era5_root = '/g/data/ub4/era5/netcdf/pressure'
+    
+    #extract request data
+    request_lat = radar.latitude['data'][0]
+    request_lon = radar.longitude['data'][0]
+    request_dt = pd.Timestamp(cftime.num2pydate(radar.time['data'][0], radar.time['units']))
+    
+    #build file paths
+    month_str = request_dt.month
+    year_str = request_dt.year
+    temp_ffn = glob(f'{era5_root}/t/{year_str}/t_era5_aus_{year_str}{month_str:02}*.nc')[0]
+    geop_ffn = glob(f'{era5_root}/z/{year_str}/z_era5_aus_{year_str}{month_str:02}*.nc')[0]
     
     #extract data
-    geopot_profile = np.array(temp.z.values/9.80665) #geopot -> geopotH
-    temp_profile = np.array(temp.t.values - 273.15)
-    
+    with xr.open_dataset(temp_ffn) as temp_ds:
+        temp_data = temp_ds.t.sel(longitude=request_lon, method='nearest').sel(latitude=request_lat, method='nearest').sel(time=request_dt, method='nearest').data[:] - 273.15 #units: deg K -> C
+    with xr.open_dataset(geop_ffn) as geop_ds:
+        geop_data = geop_ds.z.sel(longitude=request_lon, method='nearest').sel(latitude=request_lat, method='nearest').sel(time=request_dt, method='nearest').data[:]/9.80665 #units: m**2 s**-2 -> m
+    #flipdata (ground is first row)
+    temp_data = np.flipud(temp_data)
+    geop_data = np.flipud(geop_data)
+
     #append surface data using lowest level
-    geopot_profile = np.append(geopot_profile,[0])
-    temp_profile = np.append(temp_profile, temp_profile[-1])
+    geop_data = np.append(geop_data,[0])
+    temp_data = np.append(temp_data, temp_data[-1])
         
-    z_dict, temp_dict = pyart.retrieve.map_profile_to_gates(temp_profile, geopot_profile, radar)
+    z_dict, temp_dict = pyart.retrieve.map_profile_to_gates(temp_data, geop_data, radar)
 
     temp_info_dict = {'data': temp_dict['data'],  # Switch to celsius.
                       'long_name': 'Sounding temperature at gate',

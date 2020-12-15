@@ -91,4 +91,4 @@ calculation, and rainfall rate estimation."""
     main()
 
     
-    # %run radar_single -i /g/data/hj10/admin/cp2/level_1/s_band/sur/2014/20141127/cp2-s_20141127_063502.sur.mdv -o /g/data/hj10/admin/cp2/level_1b_sband_sur/v2020/
+    # %run radar_single -i /g/data/hj10/cp2/level_1/s_band/sur/2014/20141127/cp2-s_20141127_063502.sur.mdv -o /scratch/kl02/jss548/cp2_level_1b/v2020/

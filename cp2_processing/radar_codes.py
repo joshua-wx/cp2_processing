@@ -27,7 +27,7 @@ import re
 import glob
 import time
 import fnmatch
-import datetime
+from datetime import datetime
 
 # Other Libraries
 import pyart
@@ -37,6 +37,71 @@ import netCDF4
 import numpy as np
 import pandas as pd
 import xarray as xr
+
+def read_csv(csv_ffn, header_line):
+    """
+    CSV reader used for the radar locations file (comma delimited)
+    
+    Parameters:
+    ===========
+        csv_ffn: str
+            Full filename to csv file
+            
+        header_line: int or None
+            to use first line of csv as header = 0, use None to use column index
+            
+    Returns:
+    ========
+        as_dict: dict
+            csv columns are dictionary
+    
+    """
+    df = pd.read_csv(csv_ffn, header=header_line)
+    as_dict = df.to_dict(orient='list')
+    return as_dict
+
+
+def read_cal_file(cal_ffn, radar_dt):
+    """
+    read Z or ZDR calibration csv file into dictionary
+    
+    Parameters:
+    ===========
+        cal_ffn: str
+            Full filename to csv file
+            
+    Returns:
+    ========
+        cal_dict: dict
+            calibration data as dictionary
+    
+    """
+    #load calibration file
+    dict_in = read_csv(cal_ffn, None)
+    cal_dict = {}
+    #rename dictonary fields
+    cal_dict['cal_start'] = np.array([datetime.strptime(str(date), '%Y%m%d').date() for date in dict_in[0]])
+    cal_dict['cal_end']   = np.array([datetime.strptime(str(date), '%Y%m%d').date() for date in dict_in[1]])
+    cal_dict['cal_mean']  = np.array(list(map(float, dict_in[2])))
+    
+    #find offset value
+    offset = 0
+    if cal_dict:
+        caldt_mask  = np.logical_and(radar_dt.date()>=cal_dict['cal_start'], radar_dt.date()<=cal_dict['cal_end'])
+        offset_match = cal_dict['cal_mean'][caldt_mask]
+        if len(offset_match) == 0:
+            print('time period not found in cal file')
+        elif len(offset_match) > 1:
+            print('calibration data error (multiple matches)')                
+        else:
+            offset = float(offset_match)
+    else:
+        error_msg = print('no cal file found')
+        offset = 0
+    
+    #return
+    return offset
+
 
 def snr_from_reflectivity(radar, refl_field='DBZ'):
     """
@@ -307,8 +372,8 @@ def temperature_profile(radar):
     #build file paths
     month_str = request_dt.month
     year_str = request_dt.year
-    temp_ffn = glob(f'{era5_root}/t/{year_str}/t_era5_aus_{year_str}{month_str:02}*.nc')[0]
-    geop_ffn = glob(f'{era5_root}/z/{year_str}/z_era5_aus_{year_str}{month_str:02}*.nc')[0]
+    temp_ffn = glob.glob(f'{era5_root}/t/{year_str}/t_era5_aus_{year_str}{month_str:02}*.nc')[0]
+    geop_ffn = glob.glob(f'{era5_root}/z/{year_str}/z_era5_aus_{year_str}{month_str:02}*.nc')[0]
     
     #extract data
     with xr.open_dataset(temp_ffn) as temp_ds:
@@ -330,6 +395,6 @@ def temperature_profile(radar):
                       'standard_name': 'temperature',
                       'valid_min': -100, 'valid_max': 100,
                       'units': 'degrees Celsius',
-                      'comment': 'Radiosounding date: %s' % (dtime.strftime("%Y/%m/%d"))}
+                      'comment': 'Radiosounding date: %s' % (request_dt.strftime("%Y/%m/%d"))}
 
     return z_dict, temp_info_dict

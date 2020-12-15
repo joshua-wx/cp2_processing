@@ -99,7 +99,7 @@ def process_and_save(radar_file_name,
     _mkdir(outpath_ppi)
 
     # Generate output file name.
-    outfilename = os.path.basename(radar_file_name).replace('.mdv', '.cfradial.nc')
+    outfilename = '501_' + radar_start_date.strftime('%Y%m%d_%H%M%S') + '_level1b_ppi.nc'
     outfilename = os.path.join(outpath_ppi, outfilename)
 
     # Check if output file already exists.
@@ -264,7 +264,14 @@ def production_line(radar_file_name,
     # !!! READING THE RADAR !!!
 
     radar = radar_codes.read_radar(radar_file_name)
-
+    radar_dt = cftime.num2pydate(radar.time['data'][0], radar.time['units'])
+    
+    # Read calibration data
+    dbz_cal_ffn = '/g/data/hj10/admin/cp2/calibration/501_dbz_caldata.txt'
+    zdr_cal_ffn = '/g/data/hj10/admin/cp2/calibration/501_zdr_caldata.txt'
+    dbz_offset = radar_codes.read_cal_file(dbz_cal_ffn, radar_dt)
+    zdr_offset = radar_codes.read_cal_file(zdr_cal_ffn, radar_dt)
+    
     # Correct data type manually
     try:
         radar.longitude['data'] = np.ma.masked_invalid(radar.longitude['data'].astype(np.float32))
@@ -283,9 +290,18 @@ def production_line(radar_file_name,
     rho_corr = radar_codes.correct_rhohv(radar, snr_name='SNR')
     radar.add_field_like('RHOHV', 'RHOHV_CORR', rho_corr, replace_existing=True)
 
+    # Calibration DBZ
+    corr_dbz = radar.fields['DBZ']['data']
+    corr_dbz = corr_dbz - dbz_offset
+    radar.add_field_like('DBZ', 'DBZ_CORR', corr_dbz, replace_existing=True)
+    radar.fields['DBZ_CORR']['TRMM_calibration_offset(SR-GR)_dBZ'] = dbz_offset
+    
     # Correct ZDR
     corr_zdr = radar_codes.correct_zdr(radar, snr_name='SNR')
+    #apply calibration
+    corr_zdr = corr_zdr - zdr_offset
     radar.add_field_like('ZDR', 'ZDR_CORR', corr_zdr, replace_existing=True)
+    radar.fields['ZDR_CORR']['birdbath_calibration_offset_dB'] = zdr_offset
     
     # Temperature    
     height, temperature = radar_codes.temperature_profile(radar)

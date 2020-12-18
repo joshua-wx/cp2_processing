@@ -104,7 +104,7 @@ if __name__ == '__main__':
     """
     # Main global variables (Path directories).
     INPATH = "/g/data/hj10/cp2/level_1/s_band/sur/"
-    OUTPATH = "/scratch/kl02/vhl548/cpol_level_1b/v2020/ppi/"
+    OUTPATH = "/scratch/kl02/jss548/cp2_level_1b/v2020/"
 
     # Parse arguments
     parser_description =  """Raw radar PPIs processing. It provides Quality

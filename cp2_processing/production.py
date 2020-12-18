@@ -104,9 +104,9 @@ def process_and_save(radar_file_name,
 
     # Check if output file already exists.
     if os.path.isfile(outfilename):
-        print(f"Output file {outfilename} already exists. Removing file")
-        os.system('rm ' + outfilename)
-        #return None
+        print(f"Output file {outfilename} already exists. Skipping file")
+        #os.system('rm ' + outfilename)
+        return None
 
     # Lat/lon informations
     latitude = radar.latitude['data']
@@ -347,6 +347,15 @@ def production_line(radar_file_name,
                                           zdr_name='ZDR_CORR')
     radar.add_field("radar_estimated_rain_rate", rainfall)
 
+    
+    #apply gatefilter masks
+    radar.fields['DBZ_CORR']['data'] = np.ma.masked_where(gatefilter.gate_excluded, radar.fields['DBZ_CORR']['data']).astype(np.float32)
+    radar.fields['ZDR_CORR']['data'] = np.ma.masked_where(gatefilter.gate_excluded, radar.fields['ZDR_CORR']['data']).astype(np.float32)
+    radar.fields['RHOHV_CORR']['data'] = np.ma.masked_where(gatefilter.gate_excluded, radar.fields['RHOHV_CORR']['data']).astype(np.float32)
+    radar.fields['PHIDP_VAL']['data'] = np.ma.masked_where(gatefilter.gate_excluded, radar.fields['PHIDP_VAL']['data']).astype(np.float32)
+    radar.fields['KDP_VAL']['data'] = np.ma.masked_where(gatefilter.gate_excluded, radar.fields['KDP_VAL']['data']).astype(np.float32)
+    radar.fields['radar_estimated_rain_rate']['data'] = np.ma.masked_where(gatefilter.gate_excluded, radar.fields['radar_estimated_rain_rate']['data']).astype(np.float32)
+    
     # Change the temporary working name of fields to the one define by the user.
     for old_key, new_key in FIELDS_NAMES:
         try:

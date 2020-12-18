@@ -194,7 +194,7 @@ def correct_rhohv(radar, rhohv_name='RHOHV', snr_name='SNR'):
             Corrected cross correlation ratio.
     """
     rhohv = radar.fields[rhohv_name]['data'].copy()
-    snr = radar.fields[snr_name]['data'].copy()
+#    snr = radar.fields[snr_name]['data'].copy()
 
     #appears to be done onsite at CP2
 #     natural_snr = 10**(0.1 * snr)
@@ -203,7 +203,9 @@ def correct_rhohv(radar, rhohv_name='RHOHV', snr_name='SNR'):
     rho_corr = rhohv
     
     # Not allowing the corrected RHOHV to be lower than the raw rhohv
-    rho_corr[np.isnan(rho_corr) | (rho_corr < 0) | (rho_corr > 1)] = 1
+    rho_corr[rho_corr > 1] = 1
+    rho_corr[np.isnan(rho_corr) | (rho_corr < 0)] = 0
+    
     try:
         rho_corr = rho_corr.filled(1)
     except Exception:
